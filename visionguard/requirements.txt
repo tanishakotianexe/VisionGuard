@@ -5,3 +5,4 @@ rapidfuzz
 pandas
 pillow
 numpy
+gunicorn
