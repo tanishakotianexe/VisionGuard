@@ -4,10 +4,12 @@ import numpy as np, pandas as pd
 from flask import Flask, jsonify, request, send_from_directory
 from PIL import Image
 from rapidfuzz import fuzz
+from pathlib import Path
 
 IMG_SIZE = (224, 224)
 MODEL_PATH = os.environ.get("MODEL_PATH", "models/image_detector.keras")
-PRODUCTS = os.environ.get("PRODUCTS_CSV", "products.csv")
+BASE_DIR = Path(__file__).resolve().parent
+PRODUCTS = BASE_DIR / "products.csv"
 
 import tensorflow as tf, easyocr
 model = None
