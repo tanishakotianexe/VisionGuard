@@ -1,0 +1,7 @@
+flask
+tensorflow
+easyocr
+rapidfuzz
+pandas
+pillow
+numpy

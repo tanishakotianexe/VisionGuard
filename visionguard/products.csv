@@ -1,0 +1,6 @@
+product_id,product_name,brand,net_quantity,category
+DEMO001,Daily Moisturizing Lotion,ExampleCare,200 ml,Personal Care
+DEMO002,Vitamin C Face Serum,GlowSample,30 ml,Beauty
+DEMO003,Wholegrain Oats,MorningField,500 g,Food
+DEMO004,Herbal Shampoo,LeafAndRoot,250 ml,Personal Care
+DEMO005,Dark Chocolate,CocoaHouse,100 g,Food

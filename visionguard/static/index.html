@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VisionGuard AI — Image verification &amp; label reading</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head><body>
+<header class="top">
+  <a class="logo" href="#"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M17 17l6 6" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/><circle cx="11" cy="11" r="3" fill="var(--real)"/></svg>VisionGuard</a>
+  <span class="pill" id="mode"><i></i><span>Checking…</span></span>
+</header>
+
+<nav class="section-nav" aria-label="Page sections">
+  <a href="#performance">Model performance</a><a href="#roadmap">Enhancements &amp; conclusion</a>
+</nav>
+<main>
+<section class="hero">
+  <div class="copy">
+    <h1>Is this photo real? Then read what’s on it.</h1>
+    <p>Upload a product or listing image. VisionGuard scores it as camera-captured or AI-generated, reads the label text, and compares it with your product list.</p>
+    <div class="actions">
+      <button class="btn" id="go" disabled>Analyze image</button>
+      <button class="ghost" id="clear" hidden>Clear</button>
+    </div>
+    <details class="csv"><summary>Use your own product list (CSV)</summary>
+      <label>Columns: product_id, product_name, brand, net_quantity
+        <input type="file" id="csv" accept=".csv"></label>
+    </details>
+  </div>
+
+  <div class="film" id="film">
+    <label class="drop" id="drop" tabindex="0">
+      <input type="file" id="file" accept="image/*" hidden>
+      <img id="prev" alt="" hidden>
+      <div class="hint" id="hint">
+        <svg width="44" height="44" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="9" width="32" height="26" rx="4"/><circle cx="16" cy="19" r="3"/><path d="M6 31l9-8 7 6 5-4 11 8"/></svg>
+        <b>Drop an image here</b><span>or click to browse · PNG, JPG, WEBP</span>
+      </div>
+      <div class="scan" id="scan" hidden></div>
+    </label>
+  </div>
+</section>
+
+<section class="report" id="report" hidden>
+  <div class="banner" id="banner" hidden>Demo mode: these numbers are sample output, not a real analysis. Start the Python server to use your trained model.</div>
+  <div class="grid">
+    <figure class="shot">
+      <div class="stage"><img id="orig" alt="Analyzed image"><svg id="boxes"></svg></div>
+      <figcaption><label><input type="checkbox" id="tog" checked> Show detected text regions</label><span id="meta"></span></figcaption>
+    </figure>
+
+    <div class="verdict">
+      <div class="gauge"><svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="58" fill="none" stroke="var(--line)" stroke-width="10"/><circle id="ring" cx="70" cy="70" r="58" fill="none" stroke-width="10" stroke-linecap="round" stroke-dasharray="364.4" stroke-dashoffset="364.4" transform="rotate(-90 70 70)"/></svg><div><b id="pct">0%</b><small>confidence</small></div></div>
+      <div>
+        <h2 id="vlabel"></h2>
+        <p class="sub">A model estimate, not proof that a product or seller is genuine.</p>
+      </div>
+      <div class="bars">
+        <div class="bar"><span>Camera-captured</span><b id="bReal"></b><i><u id="fReal"></u></i></div>
+        <div class="bar"><span>AI-generated</span><b id="bAi"></b><i><u id="fAi"></u></i></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid two">
+    <div class="panel"><div class="ph"><h3>Text found</h3><button class="ghost sm" id="copy">Copy text</button></div>
+      <pre id="text"></pre><div id="conf"></div></div>
+    <div class="panel"><div class="ph"><h3>Closest products</h3></div>
+      <div id="matches"></div>
+      <p class="sub">Similarity of printed text only. It does not verify authenticity.</p></div>
+  </div>
+</section>
+
+<section class="performance" id="performance">
+  <div class="section-heading"><div><p class="eyebrow">MODEL EVALUATION</p><h2>Performance &amp; statistics</h2><p class="sub">Measured on the held-out CIFAKE test set. These are model evaluation results, not per-image confidence scores.</p></div><span class="data-status" id="metricsStatus">Checking evaluation data…</span></div>
+  <div class="stats-grid" id="statsGrid">
+    <article class="stat"><span>Test accuracy</span><strong id="mAccuracy">—</strong><small>Correct predictions / all test images</small></article>
+    <article class="stat"><span>Precision · REAL</span><strong id="mPrecision">—</strong><small>How often REAL predictions are correct</small></article>
+    <article class="stat"><span>Recall · REAL</span><strong id="mRecall">—</strong><small>REAL images correctly identified</small></article>
+    <article class="stat"><span>F1-score · REAL</span><strong id="mF1">—</strong><small>Balance of precision and recall</small></article>
+    <article class="stat"><span>ROC-AUC</span><strong id="mAuc">—</strong><small>Ability to separate the two classes</small></article>
+    <article class="stat"><span>Test images</span><strong id="mCount">—</strong><small>Images used for evaluation</small></article>
+  </div>
+  <div class="chart-grid">
+    <article class="chart-card"><h3>Confusion matrix</h3><p class="sub">Actual class vs. predicted class</p><img class="evaluation-image" src="/evaluation/confusion_matrix.png" alt="Confusion matrix: 9472 fake and 9621 real images correctly classified"></article>
+    <article class="chart-card"><h3>ROC curve</h3><p class="sub">ROC-AUC: 0.9914</p><img class="evaluation-image" src="/evaluation/roc_curve.png" alt="ROC curve with area under curve 0.9914"></article>
+    <article class="chart-card"><h3>Precision-recall curve</h3><p class="sub">Precision remains high across most recall values</p><img class="evaluation-image" src="/evaluation/precision_recall_curve.png" alt="Precision recall curve"></article>
+    <article class="chart-card"><h3>Classification summary</h3><p class="sub">Test set: 10,000 FAKE and 10,000 REAL images</p><p>FAKE — precision 0.96, recall 0.95, F1-score 0.95.</p><p>REAL — precision 0.95, recall 0.96, F1-score 0.95.</p><p>Correct predictions: 19,093 of 20,000.</p></article>
+  </div>
+  <p class="evaluation-footnote">Evaluation is only as representative as its test data. CIFAKE is a general real-vs-synthetic image dataset, not a dedicated product-authenticity benchmark.</p>
+</section>
+
+<section class="roadmap" id="roadmap">
+  <p class="eyebrow">NEXT STEPS</p><h2>Further enhancements</h2>
+  <div class="enhancement-grid">
+    <article><span class="step-no">01</span><h3>Product-specific training</h3><p>Build a carefully labelled dataset of genuine and manipulated product photographs, then fine-tune and validate the detector on those images.</p></article>
+    <article><span class="step-no">02</span><h3>Explainable predictions</h3><p>Add visual explanations such as Grad-CAM heatmaps so users can see which image regions influenced a model prediction.</p></article>
+    <article><span class="step-no">03</span><h3>Stronger evaluation</h3><p>Test across different cameras, lighting, compression levels and AI generators; report class-wise metrics and confidence calibration.</p></article>
+    <article><span class="step-no">04</span><h3>Safer product verification</h3><p>Combine image signals with OCR, barcode or QR checks, trusted product records and provenance data. Do not treat one model score as proof of authenticity.</p></article>
+    <article><span class="step-no">05</span><h3>Production readiness</h3><p>Add secure uploads, file-size limits, privacy-aware retention, monitoring, model versioning and a stable hosted API.</p></article>
+    <article><span class="step-no">06</span><h3>Broader model coverage</h3><p>Evaluate newer synthetic-image detectors and ensemble approaches, while checking performance on unseen datasets to reduce overfitting.</p></article>
+  </div>
+  <div class="conclusion"><p class="eyebrow">CONCLUSION</p><h2>One tool, multiple verification signals.</h2><p>VisionGuard brings together image classification, text extraction and product-catalog matching in a single workflow. Its current model provides an experimental signal for distinguishing real from AI-generated images, while OCR and fuzzy matching help compare visible label text with reference product data. The system is a decision-support prototype—not a guarantee of product authenticity. Product-specific validation, transparent evaluation and trusted external evidence are essential before real-world use.</p></div>
+</section>
+
+<section class="how">
+  <h2>How a check works</h2>
+  <ol>
+    <li><b>Classify</b><span>An EfficientNetB0 model trained on CIFAKE scores the image as real or synthetic.</span></li>
+    <li><b>Read</b><span>EasyOCR finds every line of text and marks where it sits in the image.</span></li>
+    <li><b>Match</b><span>Fuzzy matching compares the text with product name, brand and quantity.</span></li>
+  </ol>
+  <p class="note">CIFAKE is a general image dataset, not a product dataset. Treat scores as one signal among several, and test on your own product photos before relying on them.</p>
+</section>
+</main>
+<footer>VisionGuard AI · Experimental research tool</footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+</body></html>

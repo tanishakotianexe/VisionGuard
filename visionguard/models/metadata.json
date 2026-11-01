@@ -1,0 +1,19 @@
+{
+  "model": "EfficientNetB0 transfer learning",
+  "dataset": "CIFAKE",
+  "input_size": [
+    224,
+    224
+  ],
+  "class_names": [
+    "ai_generated",
+    "real"
+  ],
+  "label_mapping": {
+    "0": "ai_generated",
+    "1": "real"
+  },
+  "threshold": 0.5,
+  "purpose": "Experimental real-versus-AI-generated-like image classification",
+  "limitation": "A CIFAKE classifier score is not proof of image authenticity."
+}
