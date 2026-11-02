@@ -20,6 +20,11 @@ from rapidfuzz import fuzz
 BASE = Path(__file__).parent
 IMG_SIZE = (224, 224)
 MODEL_PATH = Path(os.environ.get("MODEL_PATH", BASE / "models" / "image_detector.keras"))
+MODEL_URL = os.environ.get("MODEL_URL", "")
+try:  # optional: set MODEL_URL in Streamlit secrets to download the model at startup
+    MODEL_URL = MODEL_URL or st.secrets.get("MODEL_URL", "")
+except Exception:
+    pass
 PRODUCTS_PATH = Path(os.environ.get("PRODUCTS_CSV", BASE / "products.csv"))
 EVAL_DIR = BASE / "static" / "evaluation"
 REQUIRED_COLS = {"product_id", "product_name", "brand", "net_quantity"}
@@ -134,12 +139,30 @@ st.markdown(CSS, unsafe_allow_html=True)
 
 
 # ---------- cached resources ----------
+def find_model():
+    """Look for the model in the expected place, then anywhere in the repo."""
+    cands = [MODEL_PATH, Path.cwd() / "models" / "image_detector.keras"]
+    for root in (BASE, BASE.parent, Path.cwd()):
+        cands += sorted(root.rglob("*.keras"))[:5]
+    for c in cands:
+        if c.is_file() and c.stat().st_size > 1_000_000:  # ignore LFS pointer stubs
+            return c
+    if MODEL_URL:
+        import urllib.request
+        dest = BASE / "models" / "image_detector.keras"
+        dest.parent.mkdir(exist_ok=True)
+        urllib.request.urlretrieve(MODEL_URL, dest)
+        return dest
+    return None
+
+
 @st.cache_resource(show_spinner="Loading image model…")
 def load_model():
-    if not MODEL_PATH.exists():
+    path = find_model()
+    if path is None:
         return None
     import tensorflow as tf
-    return tf.keras.models.load_model(str(MODEL_PATH), compile=False)
+    return tf.keras.models.load_model(str(path), compile=False)
 
 
 @st.cache_resource(show_spinner="Loading OCR engine (first run downloads models)…")
@@ -249,7 +272,12 @@ with left:
     with st.expander("Use your own product list (CSV)"):
         csv_up = st.file_uploader("Columns: product_id, product_name, brand, net_quantity", type=["csv"], key="csv")
     if model is None:
-        st.error(f"Model file not found at `{MODEL_PATH}`. Add `models/image_detector.keras` to the repo.")
+        st.error(f"Model file not found (looked for `{MODEL_PATH}`). Add `models/image_detector.keras` "
+                 "to your GitHub repo, or set a `MODEL_URL` secret pointing to the file.")
+        with st.expander("What the server can see"):
+            seen = sorted(str(p.relative_to(BASE.parent)) for p in BASE.rglob("*")
+                          if p.is_file() and "__pycache__" not in p.parts and ".git" not in p.parts)
+            st.code("\n".join(seen[:80]) or "(nothing)")
 
 if clear:
     st.session_state.pop("result", None)
