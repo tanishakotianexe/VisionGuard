@@ -1,8 +1,9 @@
-flask
-tensorflow
+streamlit>=1.40
+tensorflow-cpu>=2.20
+keras>=3.13
 easyocr
+opencv-python-headless
 rapidfuzz
 pandas
 pillow
 numpy
-gunicorn
