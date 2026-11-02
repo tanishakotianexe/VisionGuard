@@ -1,6 +1,17 @@
+[theme]
+base = "light"
+primaryColor = "#2b7a66"
+backgroundColor = "#ece6db"
+secondaryBackgroundColor = "#f6f2ea"
+textColor = "#1a1511"
+font = "sans serif"
+
 [server]
 maxUploadSize = 10
 enableXsrfProtection = true
+
+[client]
+toolbarMode = "minimal"
 
 [browser]
 gatherUsageStats = false
